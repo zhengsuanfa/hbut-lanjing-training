@@ -1,6 +1,13 @@
 # 🐋 湖北工业大学蓝鲸摄影艺术协会培训记录站
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/your-badge-id/deploy-status)](https://app.netlify.com/sites/your-site-name/deploys)
+
 一个优雅的培训记录管理系统，专为湖北工业大学蓝鲸摄影艺术协会设计，支持 Markdown 格式内容展示。
+
+## 🌐 在线访问
+
+- **生产环境**: [https://your-site-name.netlify.app](https://your-site-name.netlify.app)（部署后更新）
+- **GitHub 仓库**: [https://github.com/zhengsuanfa/hbut-lanjing-training](https://github.com/zhengsuanfa/hbut-lanjing-training)
 
 ## 📸 项目简介
 
@@ -230,6 +237,23 @@ if (password === 'lanjing2025') {  // 在此修改密码
 
 ## 📦 部署
 
+### Netlify 部署（推荐）
+
+本项目已配置 Netlify 自动部署。
+
+**快速部署**：
+
+1. 访问 [https://netlify.com](https://netlify.com) 并登录
+2. 点击 **Add new site** → **Import an existing project**
+3. 选择 **Deploy with GitHub**
+4. 选择 `zhengsuanfa/hbut-lanjing-training` 仓库
+5. 点击 **Deploy site**（配置会自动读取）
+6. 等待 1-3 分钟，部署完成！
+
+**详细教程**：查看 [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md)
+
+**自动部署**：推送代码到 GitHub 后，Netlify 会自动构建并部署。
+
 ### Vercel 部署
 
 ```bash
@@ -237,16 +261,20 @@ npm install -g vercel
 vercel
 ```
 
-### Netlify 部署
+构建配置：
+- Build Command: `npm run build`
+- Output Directory: `build`
 
-1. 将项目推送到 GitHub
-2. 在 Netlify 导入仓库
-3. 构建命令：`npm run build`
-4. 发布目录：`build`
+### 其他平台
 
-### GitHub Pages 部署
+项目已配置 `netlify.toml`，可轻松部署到：
+- Cloudflare Pages
+- Render
+- Railway
 
-需要修改 `vite.config.ts`，添加 base 路径配置。
+构建设置：
+- **构建命令**: `npm run build`
+- **发布目录**: `build`
 
 ## 🤝 贡献
 
