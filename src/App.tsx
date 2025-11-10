@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { TrainingList } from './components/TrainingList';
 import { TrainingDetail } from './components/TrainingDetail';
 import { AdminPage } from './components/AdminPage';
+import { trainingService, Training as SupabaseTraining } from './lib/supabase';
 
-// Mock data
+// 兼容旧的 Training 接口
 export interface Training {
   id: string;
   title: string;
@@ -14,39 +15,69 @@ export interface Training {
   recordingUrl?: string;
 }
 
-const STORAGE_KEY = 'lanjing_trainings';
+// 转换 Supabase 数据到应用格式
+function convertFromSupabase(data: SupabaseTraining): Training {
+  return {
+    id: data.id,
+    title: data.title,
+    date: data.date,
+    lecturer: data.lecturer,
+    content: data.content,
+    recordingUrl: data.recording_url
+  };
+}
 
-// 从 localStorage 读取数据
-const loadTrainings = (): Training[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('加载数据失败:', error);
-  }
-  return [];
-};
+// 转换应用格式到 Supabase 数据
+function convertToSupabase(training: Omit<Training, 'id'>): Omit<SupabaseTraining, 'id' | 'created_at'> {
+  return {
+    title: training.title,
+    date: training.date,
+    lecturer: training.lecturer,
+    content: training.content,
+    recording_url: training.recordingUrl
+  };
+}
 
 export function App() {
-  const [trainings, setTrainings] = useState<Training[]>(loadTrainings);
+  const [trainings, setTrainings] = useState<Training[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 当 trainings 变化时，自动保存到 localStorage
+  // 从 Supabase 加载数据
   useEffect(() => {
+    loadTrainings();
+  }, []);
+
+  const loadTrainings = async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trainings));
+      setLoading(true);
+      const data = await trainingService.getAllTrainings();
+      const converted = data.map(convertFromSupabase);
+      setTrainings(converted);
     } catch (error) {
-      console.error('保存数据失败:', error);
+      console.error('加载培训记录失败:', error);
+      alert('加载数据失败，请检查网络连接');
+    } finally {
+      setLoading(false);
     }
-  }, [trainings]);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-blue-50/50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
+          <p className="text-slate-600">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Router>
       <Routes>
         <Route path="/" element={<TrainingList trainings={trainings} />} />
         <Route path="/training/:id" element={<TrainingDetail trainings={trainings} />} />
-        <Route path="/admin" element={<AdminPage trainings={trainings} setTrainings={setTrainings} />} />
+        <Route path="/admin" element={<AdminPage trainings={trainings} setTrainings={setTrainings} onRefresh={loadTrainings} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

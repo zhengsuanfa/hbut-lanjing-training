@@ -4,16 +4,19 @@ import { Training } from '../App';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
+import { trainingService } from '../lib/supabase';
 
 interface AdminPageProps {
   trainings: Training[];
   setTrainings: (trainings: Training[]) => void;
+  onRefresh: () => Promise<void>;
 }
 
-export function AdminPage({ trainings, setTrainings }: AdminPageProps) {
+export function AdminPage({ trainings, setTrainings, onRefresh }: AdminPageProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -43,43 +46,70 @@ export function AdminPage({ trainings, setTrainings }: AdminPageProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title || !date || !lecturer || !content) {
       alert('请填写所有必填字段');
       return;
     }
 
-    if (editingId) {
-      setTrainings(
-        trainings.map(t =>
-          t.id === editingId
-            ? { ...t, title, date, lecturer, content, recordingUrl }
-            : t
-        )
-      );
-    } else {
-      const newTraining: Training = {
-        id: Date.now().toString(),
-        title,
-        date,
-        lecturer,
-        content,
-        recordingUrl: recordingUrl || undefined
-      };
-      setTrainings([newTraining, ...trainings]);
-    }
+    setLoading(true);
+    
+    try {
+      if (editingId) {
+        // 更新现有记录
+        await trainingService.updateTraining(editingId, {
+          title,
+          date,
+          lecturer,
+          content,
+          recording_url: recordingUrl || undefined
+        });
+        alert('更新成功！');
+      } else {
+        // 创建新记录
+        await trainingService.createTraining({
+          title,
+          date,
+          lecturer,
+          content,
+          recording_url: recordingUrl || undefined
+        });
+        alert('创建成功！');
+      }
 
-    setTitle('');
-    setDate('');
-    setLecturer('');
-    setContent('');
-    setRecordingUrl('');
-    setEditingId(null);
+      // 刷新数据
+      await onRefresh();
+      
+      // 清空表单
+      setTitle('');
+      setDate('');
+      setLecturer('');
+      setContent('');
+      setRecordingUrl('');
+      setEditingId(null);
+    } catch (error) {
+      console.error('保存失败:', error);
+      alert('保存失败，请重试');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('确定要删除这条培训记录吗？')) {
-      setTrainings(trainings.filter(t => t.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('确定要删除这条培训记录吗？')) {
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      await trainingService.deleteTraining(id);
+      alert('删除成功！');
+      
+      // 刷新数据
+      await onRefresh();
+      
+      // 如果正在编辑被删除的记录，清空表单
       if (editingId === id) {
         setTitle('');
         setDate('');
@@ -88,6 +118,11 @@ export function AdminPage({ trainings, setTrainings }: AdminPageProps) {
         setRecordingUrl('');
         setEditingId(null);
       }
+    } catch (error) {
+      console.error('删除失败:', error);
+      alert('删除失败，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -345,16 +380,18 @@ export function AdminPage({ trainings, setTrainings }: AdminPageProps) {
                 <div className="flex gap-3 pt-4">
                   <Button
                     onClick={handleSave}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl tracking-wide"
+                    disabled={loading}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingId ? '更新记录' : '保存记录'}
+                    {loading ? '保存中...' : (editingId ? '更新记录' : '保存记录')}
                   </Button>
                   
                   {editingId && (
                     <Button
                       onClick={handleCancel}
+                      disabled={loading}
                       variant="outline"
-                      className="flex-1 bg-white text-slate-600 border-2 border-blue-200 py-3 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all tracking-wide"
+                      className="flex-1 bg-white text-slate-600 border-2 border-blue-200 py-3 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       取消
                     </Button>
