@@ -25,13 +25,13 @@ export function TrainingList({ trainings }: TrainingListProps) {
             {/* Whale Icon */}
             <div className="mb-6 flex justify-center">
               <div className="relative">
-                <img src={logoImage} alt="湖北工业大学蓝鲸艺术协会培训记录站" className="w-24 h-24 object-contain" />
+                <img src={logoImage} alt="湖北工业大学蓝鲸摄影艺术协会培训记录站" className="w-24 h-24 object-contain" />
               </div>
             </div>
             
-            <h1 className="mb-6 text-white tracking-tight">湖北工业大学蓝鲸艺术协会</h1>
+            <h1 className="mb-6 text-white tracking-tight">湖北工业大学蓝鲸摄影艺术协会</h1>
             <div className="w-16 h-0.5 bg-blue-300 mx-auto mb-6"></div>
-            <p className="text-blue-100 tracking-wide opacity-90">HBUT Blue Whale Art Association</p>
+            <p className="text-blue-100 tracking-wide opacity-90">HBUT Blue Whale Photography Art Association</p>
           </div>
         </div>
         
